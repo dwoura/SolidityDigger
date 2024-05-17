@@ -12,7 +12,13 @@ npx hardhat node
 npx hardhat ignition deploy ./ignition/modules/Lock.ts
 ```
 
-```
-环境变量操作 npx hardhat vars
+## 环境变量操作
+ npx hardhat vars
 在config中，有自动生成对vars操作的函数方法，例如 vars.get()
+
+## foundry 一些操作
+```
+forge build
+forge compile
+forge test --match-contract
 ```

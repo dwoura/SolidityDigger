@@ -9,16 +9,24 @@ contract MyToken is IERC20{
     uint8 public _decimals;
     uint256 public _totalSupply;
     mapping (address => uint256) _balance;
-    mapping (address => (address => uint256)) allowance;
+    mapping (address => mapping(address => uint256)) _allowance;
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    address public _admin;
 
+    // event Transfer(address indexed _from, address indexed _to, uint256 _value); 
+    // event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    //string name, string symbol
     constructor(){
         _name = "MyToken";
         _symbol = "MT";
         _decimals = 9;
-        _totalSupply = 21000000*(10**_decimals);
+        mint(msg.sender, 21000000*(10**_decimals)); // 初始化mint 包含了初始化_totalSupply
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == _admin, "Only admin can do this.");
+        _;
     }
 
     function name() public view returns(string memory){
@@ -37,15 +45,15 @@ contract MyToken is IERC20{
         return _totalSupply;
     }
 
-    function balanceOf(address _owner) public returns(uint256 balance){
+    function balanceOf(address _owner) public view returns(uint256 balance){
         balance = _balance[_owner];
         return balance;
     }
 
     function transfer(address _to, uint256 _value) public returns(bool success){
         //require
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
+        _balance[msg.sender] -= _value;
+        _balance[_to] += _value;
         success = true;
         
         emit Transfer(msg.sender, _to, _value);
@@ -53,10 +61,10 @@ contract MyToken is IERC20{
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool success){
-        //require(_value >= allowance[_from][msg.sender], "allowance not enough.");
-        allowance[_from][msg.sender] -= _value;
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
+        require(_value >= _allowance[_from][msg.sender], "allowance not enough.");
+        _allowance[_from][msg.sender] -= _value;
+        _balance[_from] -= _value;
+        _balance[_to] += _value;
         
         success = true;
 
@@ -65,8 +73,24 @@ contract MyToken is IERC20{
     }
 
     function approve(address _spender, uint256 _value) public returns(bool success){
-        allowance[msg.sender][_spender] = _value;
+        _allowance[msg.sender][_spender] = _value;
         
+        success = true;
+        emit Approval(msg.sender, _spender, _value);
+        return success;
+    }
 
+    function allowance(address _owner, address _spender) public view returns(uint256 remaining){
+        remaining = _allowance[_owner][_spender];
+        return remaining;
+    }
+
+    function mint(address _to, uint256 _value) public returns(bool success){
+        _totalSupply += _value;
+        _balance[_to] += _value;
+
+        success = true;
+        emit Transfer(address(0), _to, _value);
+        return success;
     }
 }

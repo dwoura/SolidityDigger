@@ -13,14 +13,12 @@ contract MyToken is IERC20{
 
     address public _admin;
 
-    // event Transfer(address indexed _from, address indexed _to, uint256 _value); 
-    // event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
     //string name, string symbol
     constructor(){
         _name = "MyToken";
         _symbol = "MT";
         _decimals = 9;
+        _admin = msg.sender;
         mint(msg.sender, 21000000*(10**_decimals)); // 初始化mint 包含了初始化_totalSupply
     }
 
@@ -51,7 +49,7 @@ contract MyToken is IERC20{
     }
 
     function transfer(address _to, uint256 _value) public returns(bool success){
-        //require
+        require(_value <= _balance[msg.sender], "your balance not enough.");
         _balance[msg.sender] -= _value;
         _balance[_to] += _value;
         success = true;
@@ -61,7 +59,8 @@ contract MyToken is IERC20{
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool success){
-        require(_value >= _allowance[_from][msg.sender], "allowance not enough.");
+        require(_value <= _allowance[_from][msg.sender], "allowance not enough.");
+        require(_value >= _balance[msg.sender], "you balance not enough.");
         _allowance[_from][msg.sender] -= _value;
         _balance[_from] -= _value;
         _balance[_to] += _value;
@@ -85,12 +84,20 @@ contract MyToken is IERC20{
         return remaining;
     }
 
-    function mint(address _to, uint256 _value) public returns(bool success){
+    function mint(address _to, uint256 _value) public onlyOwner returns(bool success){
         _totalSupply += _value;
         _balance[_to] += _value;
 
         success = true;
         emit Transfer(address(0), _to, _value);
         return success;
+    }
+
+    function burn(address _from, uint256 _value) public returns(bool success){
+        require(_balance[_from] >= _value, "your balance not enough.");
+        _balance[_from] -= _value;
+        _totalSupply -= _value;
+        success = true;
+        emit Transfer(_from, address(0), _value);
     }
 }

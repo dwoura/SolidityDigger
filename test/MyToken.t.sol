@@ -71,4 +71,15 @@ contract MyTokenTest is Test{
         // 断言 c 中是否到账
         assertEq(myToken.balanceOf(addr_c), 200);
     }
+
+    function testBurn() public{
+        uint256 oldBalanceOfA = myToken.balanceOf(addr_a);
+        uint256 oldTotalSupply = myToken.totalSupply();
+
+        vm.startPrank(addr_a);
+        myToken.burn(addr_a, 200);
+        vm.stopPrank();
+        assertEq(myToken.balanceOf(addr_a), oldBalanceOfA - 200);
+        assertEq(myToken.totalSupply(), oldTotalSupply - 200);
+    }
 }
